@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.w3.org/1999/xhtml"  >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <meta name="description" content="" />
+    <meta name="author" content="" />
+    <title>人事管理系统</title>
+    <link href="../static/css/styles.css" rel="stylesheet" />
+    <link href="https://cdn.datatables.net/1.10.20/css/dataTables.bootstrap4.min.css" rel="stylesheet" crossorigin="anonymous" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/js/all.min.js" crossorigin="anonymous"></script>
+    <script type="text/javascript">
+        function special(){
+            var reason = prompt("请输入请假原因","因公请假");
+            if (reason != null)
+            {
+                var xhttp = new XMLHttpRequest();
+                xhttp.onreadystatechange = function() {
+                    if (this.readyState == 4 && this.status == 200) {
+                        alert("申报成功!")
+                        location.reload();
+                    }
+                };
+                var data= new FormData();
+                data.append("reason",reason);
+
+                xhttp.open("POST", "speicalcase", true);
+                xhttp.send(data);
+            }
+        }
+    </script>
+</head>
+<body class="sb-nav-fixed">
+<nav class="sb-topnav navbar navbar-expand navbar-dark bg-dark">
+    <a class="navbar-brand" href="index.html">人事管理系统</a><button class="btn btn-link btn-sm order-1 order-lg-0" id="sidebarToggle" href="#"><i class="fas fa-bars"></i></button
+><!-- Navbar Search-->
+    <form class="d-none d-md-inline-block form-inline ml-auto mr-0 mr-md-3 my-2 my-md-0">
+        <div class="input-group">
+            <a class="text-white" th:text="${session.name}"></a>
+        </div>
+    </form>
+    <!-- Navbar-->
+    <ul class="navbar-nav ml-auto ml-md-0">
+        <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" id="userDropdown" href="#" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fas fa-user fa-fw"></i></a>
+            <div class="dropdown-menu dropdown-menu-right" aria-labelledby="userDropdown">
+                <a class="dropdown-item" href="logout">登出</a>
+            </div>
+        </li>
+    </ul>
+</nav>
+<div id="layoutSidenav">
+    <div id="layoutSidenav_nav">
+        <nav class="sb-sidenav accordion sb-sidenav-dark" id="sidenavAccordion">
+            <div class="sb-sidenav-menu">
+                <div class="nav">
+                    <div class="sb-sidenav-menu-heading">我的信息</div>
+                    <a class="nav-link" href="index">我的信息</a>
+                    <div class="sb-sidenav-menu-heading">考勤</div>
+                    <a class="nav-link" href="attendance">
+                        考勤事务</a>
+                    <a th:switch="${session.rank < 2}">
+                        <a class="nav-link" th:case="false" href="attendanceRecord">
+                            考勤管理</a>
+                    </a>
+                    <div th:if="${session.rank >= 2}">
+                        <div class="sb-sidenav-menu-heading"  id="yuangonguanli">员工管理</div>
+                        <a class="nav-link"  href="employeemanagement">
+                            人事管理</a>
+                    </div>
+                    <div th:if="${session.rank == 4}">
+                        <a class="nav-link"  href="historyfind">
+                            历史信息查看</a>
+                        <div class="sb-sidenav-menu-heading"  id="tonji">统计</div>
+                        <a class="nav-link"  href="statistics">统计</a>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </div>
+    <div id="layoutSidenav_content">
+        <main>
+            <div class="container-fluid">
+                <h1 class="mt-4">考勤事务</h1>
+                <ol class="breadcrumb mb-4">
+                    <li class="breadcrumb-item active">考勤事务</li>
+                </ol>
+                <div class="row">
+                    <div class="col-xl-3 col-md-6">
+                        <div>
+                            <label class="small mb-1" >规定上班时间</label>
+                        </div>
+                        <div style="margin : 0px 0px 20px 0px;">
+                            <label th:text="${#dates.format(worktime,'HH:mm:ss')}"></label>
+                        </div>
+                        </div>
+                    <div class="col-xl-3 col-md-6">
+                        <div>
+                            <label class="small mb-1" >规定下班时间</label>
+                        </div>
+                        <div style="margin : 0px 0px 20px 0px;">
+                            <label th:text="${#dates.format(worktimeoff,'HH:mm:ss')}"></label>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-xl-3 col-md-6">
+                        <div class="card bg-success text-white mb-4">
+                            <div class="card-body">上班签到</div>
+                            <div class="card-footer d-flex align-items-center justify-content-between">
+                                <a class="small text-white stretched-link" th:href="workon"></a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xl-3 col-md-6">
+                        <div class="card bg-danger text-white mb-4">
+                            <div class="card-body">下班签退</div>
+                            <div class="card-footer d-flex align-items-center justify-content-between">
+                                <a class="small text-white stretched-link" th:href="workoff"></a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xl-3 col-md-6">
+                        <div class="card bg-warning text-white mb-4"  id="special">
+                            <div class="card-body">特殊情况</div>
+                            <div class="card-footer d-flex align-items-center justify-content-between">
+                                <button onclick="special()" class="small text-white stretched-link" style="background: transparent;opacity:0; " ></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <p style="color: red;" th:text="${msg}" th:if="${not #strings.isEmpty(msg)}"></p>
+                <div class="card mb-4">
+                    <div class="card-header"><i class="fas fa-table mr-1"></i>我的签到记录</div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                                <thead>
+                                <tr>
+                                    <th>姓名</th>
+                                    <th>工号</th>
+                                    <th>实际上班时间</th>
+                                    <th>实际下班时间</th>
+                                    <th>考勤情况</th>
+                                    <th>特殊情况</th>
+                                </tr>
+                                </thead>
+                                <tfoot>
+                                <tr>
+                                    <th>姓名</th>
+                                    <th>工号</th>
+                                    <th>实际上班时间</th>
+                                    <th>实际下班时间</th>
+                                    <th>考勤情况</th>
+                                    <th>特殊情况</th>
+                                </tr>
+                                </tfoot>
+                                <tbody>
+                                <tr th:each="record:${records}">
+                                    <td th:text="${session.name}"></td>
+                                    <td th:text="${record.id}">暂无数据</td>
+                                    <td th:switch="${record.arrivetime != null}">
+                                        <a th:case="true" th:text="${#dates.format(record.arrivetime,'yyyy-MM-dd HH:mm:ss')}"></a>
+                                        <a th:case="false">暂无数据</a>
+                                    </td>
+                                    <td th:switch="${record.leavetime != null}">
+                                        <a th:case="true" th:text="${#dates.format(record.leavetime,'yyyy-MM-dd HH:mm:ss')}"></a>
+                                        <a th:case="false">暂无数据</a>
+                                    </td>
+                                    <td th:switch="${record.condition == '准时'}">
+                                        <a th:case="true" th:text="${record.condition}"></a>
+                                        <a th:case="false" style="color: red;" th:text="${record.condition}"></a>
+                                    </td>
+                                    <td th:switch="${record.specialcase != null}">
+                                        <a th:case="true" th:text="${record.specialcase}"></a>
+                                        <a th:case="false">无特殊情况</a>
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+<script src="https://code.jquery.com/jquery-3.4.1.min.js" crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+<script src="../static/js/scripts.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.min.js" crossorigin="anonymous"></script>
+<script src="../static/assets/demo/chart-area-demo.js"></script>
+<script src="../static/assets/demo/chart-bar-demo.js"></script>
+<script src="https://cdn.datatables.net/1.10.20/js/jquery.dataTables.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.datatables.net/1.10.20/js/dataTables.bootstrap4.min.js" crossorigin="anonymous"></script>
+<script src="../static/assets/demo/datatables-demo.js"></script>
+</body>
+</html>

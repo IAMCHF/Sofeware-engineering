@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <meta name="description" content="" />
+    <meta name="author" content="" />
+    <title>人事管理系统</title>
+    <link href="../static/css/styles.css" rel="stylesheet" />
+    <link href="https://cdn.datatables.net/1.10.20/css/dataTables.bootstrap4.min.css" rel="stylesheet" crossorigin="anonymous" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/js/all.min.js" crossorigin="anonymous"></script>
+
+</head>
+<body class="sb-nav-fixed">
+<nav class="sb-topnav navbar navbar-expand navbar-dark bg-dark">
+    <a class="navbar-brand" href="index.html">人事管理系统</a><button class="btn btn-link btn-sm order-1 order-lg-0" id="sidebarToggle" href="#"><i class="fas fa-bars"></i></button
+><!-- Navbar Search-->
+    <form class="d-none d-md-inline-block form-inline ml-auto mr-0 mr-md-3 my-2 my-md-0">
+        <div class="input-group">
+            <a class="text-white" th:text="${session.userName}"></a>
+        </div>
+    </form>
+    <!-- Navbar-->
+    <ul class="navbar-nav ml-auto ml-md-0">
+        <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" id="userDropdown" href="#" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fas fa-user fa-fw"></i></a>
+            <div class="dropdown-menu dropdown-menu-right" aria-labelledby="userDropdown">
+                <a class="dropdown-item" href="logout">登出</a>
+            </div>
+        </li>
+    </ul>
+</nav>
+<div id="layoutSidenav">
+    <div id="layoutSidenav_nav">
+        <nav class="sb-sidenav accordion sb-sidenav-dark" id="sidenavAccordion">
+            <div class="sb-sidenav-menu">
+                <div class="nav">
+                    <div class="sb-sidenav-menu-heading">我的信息</div>
+                    <a class="nav-link" href="index">我的信息</a>
+                    <div class="sb-sidenav-menu-heading">考勤</div>
+                    <a class="nav-link" href="attendance">
+                        考勤事务</a>
+                    <a th:switch="${session.rank < 2}">
+                        <a class="nav-link" th:case="false" href="attendanceRecord">
+                            考勤管理</a>
+                    </a>
+                    <div th:if="${session.rank >= 2}">
+                        <div class="sb-sidenav-menu-heading"  id="yuangonguanli">员工管理</div>
+                        <a class="nav-link"  href="employeemanagement">
+                            人事管理</a>
+                    </div>
+                    <div th:if="${session.rank == 4}">
+                        <a class="nav-link"  href="historyfind">
+                            历史信息查看</a>
+                        <div class="sb-sidenav-menu-heading"  id="tonji">统计</div>
+                        <a class="nav-link"  href="statistics">统计</a>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </div>
+    <div id="layoutSidenav_content">
+        <main>
+            <div class="container-fluid">
+                <h1 class="mt-4">员工管理</h1>
+                <ol class="breadcrumb mb-4">
+                    <li class="breadcrumb-item active">员工管理</li>
+                </ol>
+                <div class="row">
+                    <div class="col-xl-3 col-md-3">
+                        <div>
+                            <label class="small mb-1" >职位</label>
+                        </div>
+                        <div style="margin : 0px 0px 20px 0px;">
+                            <label th:text="${authority}"></label>
+                        </div>
+                    </div>
+                    <div class="col-xl-3 col-md-3">
+                        <div>
+                            <label class="small mb-1" >权限</label>
+                        </div>
+                        <div style="margin : 0px 0px 20px 0px;">
+                            <label th:text="${ran}"></label>
+                        </div>
+                    </div>
+                </div>
+                <ol class="breadcrumb mb-4">
+                    <li class="breadcrumb-item active">人事变动</li>
+                </ol>
+                <div class="row">
+                    <div class="col-xl-3 col-md-6" style="margin: 10px 100px 50px 10px;">
+                        <div class="card border-left-primary shadow h-100 py-2">
+                            <form  th:action="@{/authchange}" method="post">
+                                <label  style="margin : 10px 20px 0px 20px;white-space:nowrap;">职称变动</label>
+                                <div class="form-group" style="margin : 10px 20px 0px 20px;white-space:nowrap;"><label class="small mb-1" for="inputEmailAddress">员工号</label>
+                                    <input class="form-control py-4" name="emid" id="inputEmailAddress" type="text" placeholder="请输入员工号" required="required"/></div>
+                                <div class="form-group" style="margin : 10px 20px 0px 20px;white-space:nowrap;"><label class="small mb-1" for="inputPassword">权限</label>
+                                    <input class="form-control py-4" name="auth" id="inputPassword" type="text" placeholder="请输入权限值" required="required"/></div>
+                                <div class="form-group d-flex align-items-center justify-content-between mt-4 mb-0"> <button class="btn btn-primary" type="submit" style="margin : 10px 20px 20px 20px;"  >修改</button></div>
+                            </form>
+                        </div>
+                    </div>
+                    <div class="col-xl-3 col-md-6" style="margin: 10px 100px 50px 10px;">
+                        <div class="card border-left-info shadow h-100 py-2"  id="special">
+                            <form  th:action="@{/deletechange}" method="post">
+                                <label style="margin : 10px 20px 0px 20px;white-space:nowrap;">辞退员工（仅总经理）</label>
+                                <div class="form-group" style="margin : 10px 20px 0px 20px;white-space:nowrap;"><label class="small mb-1" for="inputEmailAddress">员工号</label>
+                                    <input class="form-control py-4" name="emid" id="inputEmailAddress2" type="text" placeholder="请输入员工号" required="required"/></div>
+                                <div class="form-group d-flex align-items-center justify-content-between mt-4 mb-0"> <button class="btn btn-primary" type="submit" style="margin : 10px 20px 20px 20px;" >修改</button></div>
+                            </form>
+                        </div>
+                    </div>
+                    <div class="col-xl-3 col-md-6" style="margin: 10px 100px 50px 10px;">
+                        <div class="card border-left-warning shadow h-100 py-2 align-content-center">
+                            <table class="text-center table" style="margin-top: 10px;align-content: center;">
+                                <tr>
+                                    <th>职称</th>
+                                    <th>权限</th>
+                                </tr>
+                                <tr>
+                                    <th>实习员工/普通员工</th>
+                                    <th>1</th>
+                                </tr>
+                                <tr>
+                                    <th>组长</th>
+                                    <th>2</th>
+                                </tr>
+                                <tr>
+                                    <th>部门经理</th>
+                                    <th>3</th>
+                                </tr>
+                                <tr>
+                                    <th>总经理</th>
+                                    <th>4</th>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <ol class="breadcrumb mb-4">
+                    <li class="breadcrumb-item active">工资变动</li>
+                </ol>
+                <div class="row">
+                    <div class="col-xl-3 col-md-6" style="margin: 10px 100px 50px 10px;">
+                        <div class="card border-left-success shadow h-100 py-2">
+                            <form  th:action="@{/bonuschange}" method="post">
+                                <label  style="margin : 10px 20px 0px 20px;white-space:nowrap;">奖金调整</label>
+                                <div class="form-group" style="margin : 10px 20px 0px 20px;white-space:nowrap;"><label class="small mb-1" for="inputEmailAddress">员工号</label>
+                                    <input class="form-control py-4" name="emid" id="inputEmailAddress1" type="text" placeholder="请输入员工号" required="required"/></div>
+                                <div class="form-group" style="margin : 10px 20px 0px 20px;white-space:nowrap;"><label class="small mb-1" for="inputPassword">奖金金额</label>
+                                    <input class="form-control py-4" name="bonus" id="inputPassword1" type="text" placeholder="请输入奖金金额" required="required"/></div>
+                                <div class="form-group d-flex align-items-center justify-content-between mt-4 mb-0"> <button class="btn btn-primary" type="submit" style="margin : 10px 20px 20px 20px;">修改</button></div>
+                            </form>
+                        </div>
+                    </div>
+                    <div class="col-xl-3 col-md-6" style="margin: 10px 100px 50px 10px;">
+                        <div class="card border-left-warning shadow h-100 py-2">
+                            <form  th:action="@{/basicwagechange}" method="post">
+                                <label  style="margin : 10px 20px 0px 20px;white-space:nowrap;">基本工资调整（仅总经理）</label>
+                                <div class="form-group" style="margin : 10px 20px 0px 20px;white-space:nowrap;"><label class="small mb-1" for="inputEmailAddress">权限等级</label>
+                                    <input class="form-control py-4" name="auth" id="inputEmailAddress3" type="text" placeholder="请输入权限值" required="required"/></div>
+                                <div class="form-group" style="margin : 10px 20px 0px 20px;white-space:nowrap;"><label class="small mb-1" for="inputPassword">基本工资额</label>
+                                    <input class="form-control py-4" name="basicwage" id="inputPassword3" type="text" placeholder="请输入基本工资金额" required="required"/></div>
+                                <div class="form-group d-flex align-items-center justify-content-between mt-4 mb-0"> <button class="btn btn-primary" type="submit" style="margin : 10px 20px 20px 20px;" >修改</button></div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <ol class="breadcrumb mb-4">
+                    <li class="breadcrumb-item active">部门变动</li>
+                </ol>
+                <div class="row">
+                    <div class="col-xl-3 col-md-6" style="margin: 10px 100px 50px 10px;">
+                        <div class="card border-left-warning shadow h-100 py-2">
+                            <form  th:action="@{/departmentadd}" method="post">
+                                <label  style="margin : 10px 20px 0px 20px;white-space:nowrap;">增加部门</label>
+                                <div class="form-group" style="margin : 10px 20px 0px 20px;white-space:nowrap;"><label class="small mb-1" for="dName">部门名</label>
+                                    <input class="form-control py-4" name="dname" id="dName" type="text" placeholder="请输入部门名" required="required"/></div>
+                                <div class="form-group d-flex align-items-center justify-content-between mt-4 mb-0"> <button class="btn btn-primary" type="submit" style="margin : 10px 20px 20px 20px;">添加</button></div>
+                            </form>
+                        </div>
+                    </div>
+                    <div class="col-xl-3 col-md-6" style="margin: 10px 100px 50px 10px;">
+                        <div class="card border-left-warning shadow h-100 py-2">
+                            <form  th:action="@{/departmentdel}" method="post">
+                                <label  style="margin : 10px 20px 0px 20px;white-space:nowrap;">删除部门</label>
+                                <div class="form-group" style="margin : 10px 20px 0px 20px;white-space:nowrap;"><label class="small mb-1" for="dName1">部门号</label>
+                                    <input class="form-control py-4" name="did" id="dName1" type="text" placeholder="请输入部门号" required="required"/></div>
+                                <div class="form-group d-flex align-items-center justify-content-between mt-4 mb-0"> <button class="btn btn-primary" type="submit" style="margin : 10px 20px 20px 20px;">修改</button></div>
+                            </form>
+                        </div>
+                    </div>
+                    <div class="col-xl-3 col-md-6" style="margin: 0px 100px 50px 10px;">
+                        <div class="card border-left-warning shadow h-100 py-2">
+                            <div class="table-responsive" style="overflow:scroll;height: 240px;">
+                                <table  class="table table-bordered" width="100%" cellspacing="0">
+                                    <thead>
+                                    <tr>
+                                        <th>部门号</th>
+                                        <th>部门名</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    <tr th:each="dList:${dLists}">
+                                        <td th:text="${dList.departmentid}"></td>
+                                        <td th:text="${dList.departmentname}"></td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <ol class="breadcrumb mb-4">
+                    <li class="breadcrumb-item active">下属员工查询</li>
+                </ol>
+                <p style="color: red;" th:text="${msg}" th:if="${not #strings.isEmpty(msg)}"></p>
+                <div class="card mb-4">
+                    <div class="card-header"><i class="fas fa-table mr-1"></i>我的下属员工</div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                                <thead>
+                                <tr>
+                                    <th>工号</th>
+                                    <th>姓名</th>
+                                    <th>入职时间</th>
+                                    <th>电话</th>
+                                    <th>电子邮箱</th>
+                                    <th>性别</th>
+                                    <th>技能</th>
+                                    <th>经历</th>
+                                    <th>工资</th>
+                                    <th>部门号</th>
+                                    <th>职位</th>
+                                    <th>权限</th>
+                                    <th>绰号</th>
+                                </tr>
+                                </thead>
+                                <tfoot>
+                                <tr>
+                                    <th>工号</th>
+                                    <th>姓名</th>
+                                    <th>入职时间</th>
+                                    <th>电话</th>
+                                    <th>电子邮箱</th>
+                                    <th>性别</th>
+                                    <th>技能</th>
+                                    <th>经历</th>
+                                    <th>工资</th>
+                                    <th>部门号</th>
+                                    <th>职位</th>
+                                    <th>权限</th>
+                                    <th>绰号</th>
+                                </tr>
+                                </tfoot>
+                                <tbody>
+                                <tr th:each="record:${records}">
+                                    <td th:text="${record.id}"></td>
+                                    <td th:text="${record.name}">暂无数据</td>
+                                    <td th:text="${#dates.format(record.entrytime,'yyyy-MM-dd')}">
+                                        暂无数据
+                                    </td>
+                                    <td th:text="${record.phone}">
+                                        暂无数据
+                                    </td>
+                                    <td th:text="${record.email}">
+                                        暂无数据
+                                    </td>
+                                    <td th:text="${record.sex}">
+                                        暂无数据
+                                    </td>
+                                    <td th:text="${record.skill}">
+                                        暂无数据
+                                    </td>
+                                    <td th:switch="${record.experience!= null}">
+                                        <a th:case="true" th:text="${new String(record.experience)}"></a>
+                                        <a th:case="false">暂无数据</a>
+                                    </td>
+                                    <td th:text="${record.salary}">
+                                        暂无数据
+                                    </td>
+                                    <td th:text="${record.did}">
+                                        暂无数据
+                                    </td>
+                                    <td th:text="${record.authority}">
+                                    暂无数据
+                                </td>
+                                    <td th:text="${record.rank}">
+                                    暂无数据
+                                </td>
+                                    <td th:text="${record.nickname}">
+                                        暂无数据
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+</div>
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+    <script src="../static/js/scripts.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.min.js" crossorigin="anonymous"></script>
+    <script src="../static/assets/demo/chart-area-demo.js"></script>
+    <script src="../static/assets/demo/chart-bar-demo.js"></script>
+    <script src="https://cdn.datatables.net/1.10.20/js/jquery.dataTables.min.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.datatables.net/1.10.20/js/dataTables.bootstrap4.min.js" crossorigin="anonymous"></script>
+    <script src="../static/assets/demo/datatables-demo.js"></script>
+</body>
+</html>

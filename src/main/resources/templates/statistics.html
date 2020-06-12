@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.w3.org/1999/xhtml"  >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <meta name="description" content="" />
+    <meta name="author" content="" />
+    <title>人事管理系统</title>
+    <link href="../static/css/styles.css" rel="stylesheet" />
+    <link href="https://cdn.datatables.net/1.10.20/css/dataTables.bootstrap4.min.css" rel="stylesheet" crossorigin="anonymous" />
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js" crossorigin="anonymous"></script>
+    <script src="../static/js/echarts.js"></script>
+    <script src="../static/js/dark.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/js/all.min.js" crossorigin="anonymous"></script>
+    <style  media="print" type="text/css">
+        .noprint{visibility:hidden}
+    </style>
+</head>
+<body class="sb-nav-fixed">
+<nav class="sb-topnav navbar navbar-expand navbar-dark bg-dark">
+    <a class="navbar-brand" href="index.html">人事管理系统</a><button class="btn btn-link btn-sm order-1 order-lg-0" id="sidebarToggle" href="#"><i class="fas fa-bars"></i></button
+><!-- Navbar Search-->
+    <form class="d-none d-md-inline-block form-inline ml-auto mr-0 mr-md-3 my-2 my-md-0">
+        <div class="input-group">
+            <a class="text-white" th:text="${session.userName}"></a>
+        </div>
+    </form>
+    <!-- Navbar-->
+    <ul class="navbar-nav ml-auto ml-md-0">
+        <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" id="userDropdown" href="#" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fas fa-user fa-fw"></i></a>
+            <div class="dropdown-menu dropdown-menu-right" aria-labelledby="userDropdown">
+                <a class="dropdown-item" href="logout">登出</a>
+            </div>
+        </li>
+    </ul>
+</nav>
+<div id="layoutSidenav">
+    <div id="layoutSidenav_nav">
+        <nav class="sb-sidenav accordion sb-sidenav-dark" id="sidenavAccordion">
+            <div class="sb-sidenav-menu">
+                <div class="nav">
+                    <div class="sb-sidenav-menu-heading">我的信息</div>
+                    <a class="nav-link" href="index">我的信息</a>
+                    <div class="sb-sidenav-menu-heading">考勤</div>
+                    <a class="nav-link" href="attendance">
+                        考勤事务</a>
+                    <a th:switch="${session.rank < 2}">
+                        <a class="nav-link" th:case="false" href="attendanceRecord">
+                            考勤管理</a>
+                    </a>
+                    <div th:if="${session.rank >= 2}">
+                            <div class="sb-sidenav-menu-heading"  id="yuangonguanli">员工管理</div>
+                            <a class="nav-link"  href="employeemanagement">
+                                人事管理</a>
+                    </div>
+                    <div th:if="${session.rank == 4}">
+                        <a class="nav-link"  href="historyfind">
+                            历史信息查看</a>
+                        <div class="sb-sidenav-menu-heading"  id="tonji">统计</div>
+                        <a class="nav-link"  href="statistics">统计</a>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </div>
+    <div id="layoutSidenav_content">
+        <main>
+            <div class="container-fluid">
+                <h1 class="mt-4">统计</h1>
+                <ol class="breadcrumb mb-4">
+                    <li class="breadcrumb-item active">统计</li>
+                </ol>
+
+                <!-- 为 ECharts 准备一个具备大小（宽高）的 DOM -->
+                <div id="draw" style="margin:0% auto;width:auto;height:400px;"></div>
+                <!-- 为 ECharts 准备一个具备大小（宽高）的 DOM
+                <div id="draw_avg" style="background-color:red;margin: 5% 0% 0% 0%;width:auto;height:400px;text-align: center;"></div>
+                 为 ECharts 准备一个具备大小（宽高）的 DOM
+                <div id="draw_max" style="background-color:red;margin: 5% 0% 0% 0%;width:auto;height:400px;text-align: center;"></div>
+                 为 ECharts 准备一个具备大小（宽高）的 DOM -->
+                <div id="draw_salary" style="margin: 5% 0% 3% 0%; width:auto;height:400px;"></div>
+                <div class="noprint" style="background-color: rgb(84,84,84);margin: 5% 0% 7% 0%;border-radius: 15px 15px 15px 15px">
+                    <div style="height: 50px"></div>
+                    <div style="text-align: center;background-color: rgba(235,235,235,0)">
+                        <p style="color: white">您可点击此处
+                        <input type="button"  onclick="doPrint()" style="margin: 0% 0% 3% 0%;border:none;border:none;background:none;cursor:pointer;color: #ffaf64" value="打印" />
+                        统计图</p>
+                    </div>
+
+                    <div class="noprint" style="text-align: center;">
+                        <form action="/export.do" method="post">
+                            <p style="color: white">您可点击此处
+                            <input type="submit"   style="margin: 0% 0% 5% 0%;border:none;border:none;background:none;cursor:pointer;color: #ffaf64" value="导出全体员工信息" />
+                            </p>
+                        </form>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+</div>
+<script type="text/javascript">
+    // 基于准备好的dom，初始化echarts实例
+    var myChart = echarts.init(document.getElementById('draw'),'dark');
+    // 指定图表的配置项和数据
+    myChart.setOption({
+        grid:{left: '2%', right:'8%'},
+        title: {
+            text: '各部门人数占比',
+            left: 'center',
+            top: 20,
+            textStyle: {
+                color: '#ffffff'
+            }
+        },
+        toolbox: {
+            show: true,
+            feature: {
+                saveAsImage: {}
+            }
+        },
+        tooltip: {
+            trigger: 'item',
+            formatter: '{a} <br/>{b} : {c} ({d}%)'
+        },
+
+        visualMap: {
+            show: false,
+            min: 80,
+            max: 600,
+            inRange: {
+                colorLightness: [0, 1]
+            }
+        },
+        series: [
+            {
+                name: '单个部门人数',
+                type: 'pie',
+                radius: '55%',
+                center: ['50%', '50%'],
+                data: [],
+                roseType: 'radius',
+                label: {
+                    color: '#ffffff'
+                },
+                labelLine: {
+                    lineStyle: {
+                        color: '#ffffff'
+                    },
+                    smooth: 0.2,
+                    length: 10,
+                    length2: 20
+                },
+                itemStyle: {
+                    normal: {
+                        color: '#ec5f59',
+                        shadowBlur: 200,
+                        shadowColor: 'rgba(39,39,39,0.9)'
+                    }
+                },
+
+                animationType: 'scale',
+                animationEasing: 'elasticOut',
+                animationDelay: function (idx) {
+                    return Math.random() * 200;
+                }
+            }
+        ]
+    });
+    // 使用刚指定的配置项和数据显示图表
+    myChart.showLoading();//显示加载图标
+    // 异步加载数据
+    $.get('/data.json').done(function (data) {
+        var rs = [];
+        for(var res in data){
+            rs.push({name :res, value:data[res]});
+        }
+       rs=rs.sort(function (a, b) { return a.value - b.value; });
+        myChart.setOption({        //填入数据
+            series: [{
+                data: rs
+            }]
+        });
+        myChart.hideLoading();//隐藏加载图标
+    });
+
+
+</script>
+<script>
+    // 基于准备好的dom，初始化echarts实例
+    var myChart_salary = echarts.init(document.getElementById('draw_salary'),'dark');
+    // 指定图表的配置项和数据
+    myChart_salary.setOption({
+        grid:{left: '8%', right:'8%'},
+
+        title: {
+            text: '各部门工资分布（未定工资不参与计算）',
+            left: 'center',
+            top: 20,
+            textStyle: {
+                color: '#ffffff'
+            }
+        },
+        toolbox: {
+            show: true,
+            feature: {
+                saveAsImage: {}
+            }
+        },
+        legend: {},
+        tooltip: {},
+        dataset: {
+            dimensions: ['部门', '平均工资', '最高工资', '最低工资'],
+            source: [/*
+                {'部门': 'Matcha Latte', '平均工资': 43.3, '最高工资': 85.8, '最低工资': 93.7},
+                {'部门': 'Milk Tea', '平均工资': 83.1, '最高工资': 73.4, '最低工资': 55.1},
+                */
+            ]
+        },
+        xAxis: {type: 'category',name:'部门'},
+        yAxis: {
+            name: '/元',
+            type:'value'
+        },
+        series: [
+            {type: 'bar'},
+            {type: 'bar'},
+            {type: 'bar'}
+        ]
+    });
+
+    var salary=[/*{'部门': 'Matcha Latte', '平均工资': 43.3, '最高工资': 85.8, '最低工资': 93.7}*/];
+    // 使用刚指定的配置项和数据显示图表。
+    myChart_salary.showLoading();//显示加载图标
+    // 异步加载数据
+    $.get('/statistics_avgsalary.json').done(function (statistics_avgsalary) {
+        $.get('/statistics_maxsalary.json').done(function (statistics_maxsalary) {
+            $.get('/statistics_minsalary.json').done(function (statistics_minsalary) {
+                for(var res in statistics_avgsalary)
+                {
+                    salary.push({'部门': res, '平均工资': statistics_avgsalary[res],
+                        '最高工资': statistics_maxsalary[res],
+                        '最低工资': statistics_minsalary[res]});
+
+                }
+                myChart_salary.setOption({        //填入数据
+                    dataset: {
+                        source: salary
+                    }
+                });
+                myChart_salary.hideLoading();//隐藏加载图标
+            });
+        });
+    });
+</script>
+<script>
+    /**
+     * 将多个canvas画布组成的图表合成为一个完整的canvas,并获取完整的dataURl
+     * @param divId divId 包含整个画布的divId
+     * @returns {String} widthXheight@dataURL 例：
+     * 400X300@data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA
+     */
+
+    function getFullCanvasDataURL(divId){
+//将第一个画布作为基准。
+        var baseCanvas = $("#"+divId).find("canvas").first()[0];
+        if(!baseCanvas){
+            return false;
+        };
+        var width = baseCanvas.width;
+        var height = baseCanvas.height;
+        var ctx = baseCanvas.getContext("2d");
+        //遍历，将后续的画布添加到在第一个上
+        $("#"+divId).find("canvas").each(function(i,canvasObj){
+            if(i>0){
+                var canvasTmp = $(canvasObj)[0];
+                ctx.drawImage(canvasTmp,0,0,width,height);
+            }
+        });
+        //获取base64位的url
+        return baseCanvas.toDataURL();
+    }
+//打印统计图
+    function doPrint() {
+        //Converts canvas to an image
+        var image=new Image();
+        image.src=getFullCanvasDataURL('draw');
+        window.print();
+    }
+</script>
+<script>
+    //监听window变化
+    window.onresize = function(){
+        myChart.resize();
+        myChart_salary.resize();
+    };
+
+    //监听div大小变化
+    (function($, h, c) {
+        var a = $([]),
+            e = $.resize = $.extend($.resize, {}),
+            i,
+            k = "setTimeout",
+            j = "resize",
+            d = j + "-special-event",
+            b = "delay",
+            f = "throttleWindow";
+        e[b] = 250;
+        e[f] = true;
+        $.event.special[j] = {
+            setup: function() {
+                if (!e[f] && this[k]) {
+                    return false;
+                }
+                var l = $(this);
+                a = a.add(l);
+                $.data(this, d, {
+                    w: l.width(),
+                    h: l.height()
+                });
+                if (a.length === 1) {
+                    g();
+                }
+            },
+            teardown: function() {
+                if (!e[f] && this[k]) {
+                    return false;
+                }
+                var l = $(this);
+                a = a.not(l);
+                l.removeData(d);
+                if (!a.length) {
+                    clearTimeout(i);
+                }
+            },
+            add: function(l) {
+                if (!e[f] && this[k]) {
+                    return false;
+                }
+                var n;
+                function m(s, o, p) {
+                    var q = $(this),
+                        r = $.data(this, d);
+                    r.w = o !== c ? o: q.width();
+                    r.h = p !== c ? p: q.height();
+                    n.apply(this, arguments);
+                }
+                if ($.isFunction(l)) {
+                    n = l;
+                    return m;
+                } else {
+                    n = l.handler;
+                    l.handler = m;
+                }
+            }
+        };
+        function g() {
+            i = h[k](function() {
+                    a.each(function() {
+                        var n = $(this),
+                            m = n.width(),
+                            l = n.height(),
+                            o = $.data(this, d);
+                        if (m !== o.w || l !== o.h) {
+                            n.trigger(j, [o.w = m, o.h = l]);
+                        }
+                    });
+                    g();
+                },
+                e[b]);
+        }
+    })(jQuery, this);
+    $("#draw").resize(function(){
+        //当id为**的div大小变化时的处理函数写在这里.....
+        //当然了#**只不过是id选择器，你也可以换成任何jquery的选择器......
+        myChart.resize();
+    });
+    $("#draw_salary").resize(function(){
+        //当id为**的div大小变化时的处理函数写在这里.....
+        //当然了#**只不过是id选择器，你也可以换成任何jquery的选择器......
+        myChart_salary.resize();
+    });
+</script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+<script src="../static/js/scripts.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.min.js" crossorigin="anonymous"></script>
+<script src="../static/assets/demo/chart-area-demo.js"></script>
+<script src="../static/assets/demo/chart-bar-demo.js"></script>
+<script src="https://cdn.datatables.net/1.10.20/js/jquery.dataTables.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.datatables.net/1.10.20/js/dataTables.bootstrap4.min.js" crossorigin="anonymous"></script>
+<script src="../static/assets/demo/datatables-demo.js"></script>
+</body>
+</html>
